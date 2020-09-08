@@ -1,0 +1,337 @@
+entity Inspection {
+    pharmacyId String required
+    inspectorId String required
+    pv Boolean
+    publicComments String
+    warning Boolean
+    warningComments String
+    reInspection Boolean
+    comments String
+    peopleMet String
+    dateFrom Instant
+    dateTo Instant
+    reportDate Instant
+    createdDate Instant
+    annexes String
+	executedWith String
+	afterDeadline Boolean
+    deadline Instant
+    status InspectionStatus
+    reason InspectionReason
+    createdBy String
+}
+
+enum InspectionReason {
+    INSPECTION,REINSPECTION
+}
+
+enum InspectionStatus {
+    RUNNING,TO_EVALUATE,CLOSED_WITHOUT_TROUBLE,CLOSED_WITH_TROUBLE
+}
+
+entity Allowance {
+    activityId String required
+    type AllowanceType required
+    amount Double
+    ticket String
+    kilometers Double
+    comments String
+}
+
+enum AllowanceType {
+    KILOMETERS,TRAIN,TRAM,OTHER,DAILY
+}
+
+entity Day {
+    inspectorId String required
+    dateOfDay Instant
+    memo String
+}
+
+entity DayAllowance {
+    dayId String required
+    type DayAllowanceType
+}
+
+enum DayAllowanceType {
+    FULL,HALF,NONE
+}
+
+
+entity Pharmacy {
+    inspectorId String required
+    titularId String required
+    ownerId String required
+	name String
+	address String
+    apbNumber String
+    city String
+    zip String
+    email String
+    portalId String
+    nextInspectionDate Instant
+    lastInspectionDate Instant
+    comments String
+}
+entity Inspector {
+	firstName String
+    lastName String
+    trigram String
+}
+enum StatusComplaint {
+    OPEN,CLOSED,DEFICIENCY,WARNING,MINUTES
+}
+entity Complaint {
+    pharmacyId String required
+    inspectorId String
+	creationDate Instant
+    receptionDateFAMHP Instant
+    receptionDateInspector Instant
+    startDate Instant
+	title String
+	description String
+	lastModified Instant
+	closeDate Instant
+	sourceDetail String
+	source SourceComplaint
+	status StatusComplaint
+	finalState Boolean
+	createdBy String
+}
+enum SourceComplaint {
+	CITIZEN, PHARMACY, SERVICE_AGENCY, BELGIAN_AUTHORITY, FOREIGN_AUTHORITY, ANONYMOUS
+}
+
+entity Action {
+    inspectorId String required
+    complaintId String
+    judicialCaseId String
+    inspectionId String
+	description String
+	date Instant
+	title String required
+	creationDate Instant
+	actionType ActionType
+	createdBy String
+}
+
+enum ActionType {
+	INVESTIGATION, MEETING, INSPECTION, JUDICIAL_FILE
+}
+
+entity JudicialCase {
+    inspectorId String required
+    pharmacyId String
+	apostilNbr Integer
+	apostilNoticNbr Integer
+	apostilComment String
+	contravenant ContravenantType
+	contrevenantName String
+    contrevenantAddress String
+	datePv Instant
+	datePvSent Instant
+	type JudicialType
+	transmission Transmission
+	transmissionInfo TransmissionInfo
+	dossierNbr Integer
+	assistanceNbr Integer
+	relation String
+	pvNbr Integer
+	subject String
+	id String
+	createdDate Instant
+	createdBy String
+	lastModifiedBy String
+	lastModifiedDate Instant
+}
+
+entity FalsePrescription{
+    inspectorId String required
+    pharmacyId String
+    destinationLocality String
+    locality String
+    destinationType DestinationType
+    doctor String
+    dossierNbr Integer
+    ordonnanceNbr Integer
+    patientName String
+    patientBirthday Instant
+    patientNatNbr Integer
+    prescriptionDate Instant
+    medicines String
+    relation String
+    comments String
+    id String
+    createdDate Instant
+    createdBy String
+    lastModifiedBy String
+    lastModifiedDate Instant
+}
+
+enum DestinationType{
+    PARKET,POLICE,INAMI,OTHER
+}
+
+entity Activity {
+    date Instant
+    activityTypeId String required
+    activitySubtypeId String required
+    pharmacyId String
+    inspectorId String required
+    jointInspectionInspectorId String
+    inspectionId String
+    judicialCaseId String
+    falsePrescriptionId String
+    complaintId String
+    status ActivityStatus
+    locationType LocationType
+    ienType IenType
+    inspectionType InspectionType
+    privateComments String
+    publicComments String
+    start Instant
+    end Instant
+    annexes String
+    locationName String
+    locationStreet String
+    locationHouseNbr String
+    locationExtension String
+    locationZip String
+    locationLocality String
+    locationCountry String
+    requester String
+//    jointInspectionContent String
+//    jointInspectionReference String
+}
+
+entity ActivityType {
+    value String
+}
+
+entity ActivitySubtype {
+    value String
+    procostCode String
+    measure String
+}
+
+enum ActivityStatus {
+    PLANNED,EXECUTED,CANCELLED
+}
+
+enum LocationType {
+    PUBLIC_PHARMACY,VETERINARY,HOSPITAL,OTHER
+}
+
+enum IenType {
+    INTERNAL,EXTERNAL,NON
+}
+
+enum InspectionType {
+    INSPECTION,RE_INSPECTION
+}
+
+enum JudicialType {
+	APOSTIL,PV,ASSISTANCE
+}
+
+enum ContravenantType {
+	PHARMACY,PHYSICAL_PERSON,ENTERPRISE
+}
+
+enum Transmission{
+    JUDICIAL_SERVICE,PARQUET,OTHER
+}
+
+enum TransmissionInfo{
+    AMENDE,PARQUET
+}
+
+entity CapaItem {
+    findingId String required
+    inspectionId String required
+}
+
+entity CapaResponse {
+    capaItemId String required
+    contactId String required
+    order Integer
+    date Instant
+}
+
+entity Finding {
+    parentId String
+    inspectionId String required
+    order String
+    labelNl String
+    labelFr String
+    type FindingType
+    category FindingCategory
+}
+
+enum FindingType {
+    ITEM,ITEM_WTIH_REMARKS
+}
+
+enum FindingCategory {
+    OTHER,MAJOR,CRITICAL
+}
+
+entity PlatoDocument {
+    inspectionId String required
+    actionId String
+}
+
+entity Contact {
+    name String
+    phone String
+    mail String
+    language String
+    famhpNbr String
+}
+
+dto * with mapstruct
+service * with serviceImpl
+
+//relationship OneToMany {
+//  Pharmacy to Inspection
+//  Inspector to Inspection
+//  Inspection to Finding
+//  Inspection to PlatoDocument
+
+//  Inspection to CapaItem
+
+//  Finding to Finding{children}
+//  Finding to Finding{remarks}
+//  CapaItem to CapaResponse
+//  Contact to CapaResponse{titular}
+
+//  Pharmacy to Activity
+//  Inspection to Activity
+
+//	Pharmacy to Complaint
+// 	Inspector to Complaint
+
+//  Inspector to Action
+//  Complaint to Action
+//  Action to PlatoDocument
+
+//  Inspector to Pharmacy
+//  Contact to Pharmacy{titular}
+//  Contact to Pharmacy{owner}
+
+//  Inspector to JudicialCase
+
+//  Inspector to FalsePrescription
+
+//  Inspector to Activity
+
+//  StatusComplaint to Complaint
+//  ActivityType to Activity
+//  ActivitySubtype to Activity
+//}
+
+//relationship OneToOne {
+//  CapaItem to Finding
+//  Inspection to Action
+//  JudicialCase to Action
+//}

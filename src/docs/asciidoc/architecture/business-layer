@@ -1,0 +1,91 @@
+== Business Layer
+
+Include business logic, this is the core of an architecture.Surrounding the business logic are the inbound
+and outbound adapters. An inbound adapter handles requests from clients and invokes the business logic.
+An outbound adapter, which is invoked by the business logic, invokes other services and applications.
+
+=== Pattern: Domain model
+Organize the business logic as an object model consisting of classes that have state and behavior.
+
+* Easy understand design.
+* Closely mirror real world.
+* each classes can be tested independently.
+* easy to extend.
+
+=== Entity
+An object that has a persistent identity.
+
+=== Repository
+An object that provides access to persistent entities and encapsulates the mechanism for accessing
+the database.
+
+=== Service
+
+An object that implements business logic that doesn’t belong in an entity or a value object.
+We will find the business logic between. Each service has is own domain model.
+
+=== Pattern: Aggregate
+Organize a domain model as a collection of aggregates, each of which is a graph of objects that can be treated as a unit.
+Aggregates decompose a domain model into chunks, which are individually easier to understand. They also clarify
+the scope of operations.
+
+* Aggregates are consistency boundaries
+* Identifying aggregates is key
+
+==== Aggregate rules
+
+* Rule #1: Reference only the aggregate root
+* Rule #2: Inter-aggregate references must use primary keys
+* Rule #3: One transaction creates or updates one aggregate
+** This rule makes it more complicated to implement operations that need to create or update multiple aggregates.
+But this is exactly the problem that sagas are designed to solve.
+
+
+=== Communication
+
+==== REST
+
+RESTful Web services allow the requesting systems to access and manipulate textual representations of Web resources
+by using a uniform and predefined set of stateless operations
+
+A key concept in REST is a resource, which typically represents a single business object,
+such as a Customer or Product, or a collection of business objects. REST uses the HTTP verbs
+for manipulating resources, which are referenced using a URL. For example, a GET request returns
+the representation of a resource, which is often in the form of an XML document or JSON object,
+although other formats such as binary can be used. A POST request creates a new resource,
+and a PUT request updates a resource. The Order Service, for example,
+has a POST /orders endpoint for creating an Order and a GET /orders/{orderId} endpoint
+for retrieving an Order.
+
+==== Message broker
+
+image::../diagrams/msg_broker.jpg[]
+
+A message broker is an intermediary through which all messages flow. A sender writes the message
+to the message broker, and the message broker delivers it to the receiver.
+An important benefit of using a message broker is that the sender doesn’t need to know the network
+location of the consumer. Another benefit is that a message broker buffers messages until the consumer is
+able to process them.
+
+* Loose coupling— A client makes a request by simply sending a message to the appropriate channel.
+The client is completely unaware of the service instances. It doesn’t need to use a discovery mechanism
+to determine the location of a service instance.
+* Message buffering— The message broker buffers messages until they can be processed. With a synchronous
+request/response protocol such as HTTP, both the client and service must be available for the duration of
+the exchange. With messaging, though, messages will queue up until they can be processed by the consumer.
+This means, for example, that an online store can accept orders from customers even when
+the order-fulfillment system is slow or unavailable. The messages will simply queue up until
+they can be processed.
+* Flexible communication— Messaging supports all the interaction styles (synchronous, asynchronous)
+
+but
+
+* Potential performance bottleneck— There is a risk that the message broker could be a performance bottleneck.
+Fortunately, many modern message brokers are designed to be highly scalable.
+* Potential single point of failure— It’s essential that the message broker is highly available—otherwise,
+system reliability will be impacted. Fortunately, most modern brokers have been designed to be highly available.
+* Additional operational complexity— The messaging system is yet another system component that must be
+installed, configured, and operated.
+
+
+=== Transaction

@@ -1,0 +1,116 @@
+== Persistence Layer
+
+=== Spring Data
+=== Auditing data
+In an application we would like to track changes (creation, update, delete...) and who and when that change happened.
+
+_Spring audit_ provides annotations that allow to audit some metadata on object like creation date,
+creation user...
+
+_Javers_ is another framework that allow you to manage versioning on your entities. You can also choose where
+to store this versioning in a JSON document.
+
+=== Data Model design
+==== Embedded data Model
+It is a way to design one to many data, include a (or list) of document inside a document itself. These schema
+are generally know as "denormalized" models.
+
+* But for export to external system reason, it should be better to use a typical one to many link between two entities
+like a normalized model.
+
+* example :
+[source,json]
+{
+   "_id": "joe",
+   "name": "Joe Bookreader",
+   "addresses": [
+                {
+                  "street": "123 Fake Street",
+                  "city": "Faketon",
+                  "state": "MA",
+                  "zip": "12345"
+                },
+                {
+                  "street": "1 Some Other Street",
+                  "city": "Boston",
+                  "state": "MA",
+                  "zip": "12345"
+                }
+              ]
+ }
+
+
+==== Normalized Data Model
+When you normalize your data, you are dividing your data into multiple collections with references
+between those collections. Each piece of data will be in a collection, but multiple documents will
+reference it. This means, to change your data, you only need to update one document, because that
+data is only defined once
+
+
+==== Model One to One relationship
+
+
+==== Model One to Many relationship
+related data is stored within a single document could be optimal, but for the reason that some data could be huge,
+it is make sense to store the Id of the reference object instead of the object.
+So that to access to this information the application can run a query to get the data.
+Sometimes, we should make this query a lot time (for e.g a list that display also the data from a reference)
+So that it is better to add a copy of some field of the reference inside the entity.
+
+Note: It exists DBRefs convention , but it is not recommended by the mongodb community.
+
+=== Query
+
+==== Spring data Repository
+Repository is a pattern that provide an abstraction over a persistence mechanism. It has object affinity and is typically
+the pattern that would be used with a domain model.
+It Should contain the CRUD operation for one entity and no calling to other repository or a DAO.
+
+https://docs.spring.io/spring-data/mongodb/docs/current/reference/html/#reference
+
+==== Dao
+Data Access Object is also a pattern that provide an abstraction over a persistence mechanism. DAO is expressed in terms of
+database tables, providing CRUD interfaces to them. It tends to serve as wrappers around database tables.
+It is used to separate low level data accessing API or operations from high level business services.
+the service remains completely in dark about how the low-level operations to access the database is done.
+
+==== Aggregation Framework
+Aggregations operations process data records and return computed results.
+Aggregation operations group values from multiple documents together, and can perform a variety of
+operations on the grouped data to return a single result
+
+==== Text Search
+In the search form, user often wants to make special search like adding wildcard, search with a dropdown field...
+So Use of fagg common library. It contains a QueryUtil class that contains method for text search.
+This allow you to create freetext query, wildcard query, dropdown query ...
+
+===== Text Indexes
+
+===== Text Search Operators
+When user want to make search on a list of item, they want
+You can use search operator Or and And to perform
+
+===== Text Search Language
+For query, you can annotate a field with the search option Diacritic or None.
+
+
+===== Collation
+It is a feature to define rule for string comparaison that comply with language convention (strength, language locale,
+case level, letter marks, accent..)
+
+=== Concurrency Access
+
+Optimistic locking scheme will be used to manage concurrency access to data at service level.
+
+=== File
+
+Files must be saved on Gridfs bucket with meta data.
+GridFS is the MongoDB specification for storing and retrieving large files such as images, audio files,
+video files, etc. It is kind of a file system to store files but its data is stored within MongoDB collections.
+GridFS has the capability to store files even greater than its document size limit of 16MB.
+GridFS divides a file into chunks and stores each chunk of data in a separate document,
+each of maximum size 255k.
+
+
+
+

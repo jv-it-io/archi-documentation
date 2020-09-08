@@ -1,0 +1,32 @@
+== Autocontrol communication
+
+:icons: font
+
+// Set new URI for reference to FontAwesome CSS
+:iconfont-cdn: //maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css
+
+=== Message Broker RPC + Outbox pattern
+
+image::../diagrams/MixRPCEvent.png[]
+
+==== Communication autocontrol to plato.
+When the information is getting from Autocontrol, the Autocontrol Proxy Service send information on a Rabbit MQ Queue.
+Plato Service is listening to the queue for new messages, when a message is coming, it consumes the message.
+BackOffice respond to the message by using RPC method of Rabbit.
+
+icon:thumbs-up[] (+) Several services can receive the message (topic).
+
+icon:thumbs-up[] (+) Can receive automatic response by RPC queue.
+
+icon:thumbs-up[] (+) Consume the message when the service is available.
+
+==== Communication Plato to autocontrol
+In that case, we can use Plato Outbox (use to send information from Plato Event to other system, as Datawarehouse)
+The Autocontrol Proxy Service can subscribe to the outbox service and process the event for send UPDATE to Autocontrol.
+
+icon:thumbs-up[] (+) reuse a service that will be in place in the Plato environment
+
+
+
+
+

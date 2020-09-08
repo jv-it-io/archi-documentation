@@ -1,0 +1,59 @@
+== Presentation Layer
+
+Angular
+Primeng
+
+=== Search forms
+Template description for a search form is :
+
+. Forms that contains all predifined criteria
+. clear form button
+. Search button for display data
+. Result table
+.. record number
+.. clear filter button to reselt the filter on the table
+.. Result table with below of each column title the filter for the column
+.. The pagination list with a select box for the record size by page
+
+
+=== Pagination usage
+
+==== For a table
+As the data in a specific table is limited it should display all the data on one page, so no need of pagination for this usage
+
+==== For a search result
+As the user could enter no filter in the search form, it should display the resultat in page with a pagination selector above the result table
+
+=== Table
+
+The need of filter inside the table, sort some column or adapt table for specialized issue it should Use turbo table from PrimeNg framework
+
+[source, html]
+<p-table [value]="cars">
+    <ng-template pTemplate="header">
+        <tr>
+            <th>Vin</th>
+            <th>Year</th>
+            <th>Brand</th>
+            <th>Color</th>
+        </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-car>
+        <tr>
+            <td>{{car.vin}}</td>
+            <td>{{car.year}}</td>
+            <td>{{car.brand}}</td>
+            <td>{{car.color}}</td>
+        </tr>
+    </ng-template>
+</p-table>
+
+=== Default id
+
+set a default id on html elements for automated test usage
+
+=== Create edit on popup modal?
+With a popup modal as edit window, we can guide the user. The background is visible but not accessible and if the user
+want to access it, he must finish the edition by saving or canceling. So if not leaving the current page, state or screen
+to complete a task, modal could be a good solution. But in constrast, if the task is complex, the forms is big it should
+be preferred to use another way (inline or a new page for editing)

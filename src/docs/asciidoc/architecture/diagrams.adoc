@@ -1,0 +1,11 @@
+== Diagram view
+
+=== Context diagram
+
+image::../diagrams/context_diagram_plato_v1.png[]
+
+
+
+=== Container diagram
+
+image::../diagrams/container_diagram_plato_v1.png[]

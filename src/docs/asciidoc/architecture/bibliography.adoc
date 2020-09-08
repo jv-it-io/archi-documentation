@@ -1,0 +1,30 @@
+== Bibliography
+
+=== Cloud Native Java: Designing Resilient Systems with Spring Boot, Spring Cloud, and Cloud Foundry
+
+By Josh Long & Kenny Bastani
+
+image::../images/cloudNative.jpg[]
+
+=== Microservices Patterns
+
+By Chris Richardson
+
+image::../images/microservicesPatterns.jpg[]
+
+=== Implementing Domain-Driven Design
+
+By Vaughn Vernon
+
+image::../images/ImplementingDomainDriven.jpg[]
+
+
+=== Hands-On Microservices with Spring Boot and Spring Cloud
+
+By Magnus Larsson
+
+image::../images/MircroserviceWithSpringboot.jpg[]
+
+
+
+

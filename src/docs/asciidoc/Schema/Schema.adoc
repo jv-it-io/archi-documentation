@@ -1,0 +1,69 @@
+:include_dir: ../ architecture
+
+= Plato Schema
+:toc-title: Contents
+:toc: preambule
+:description: Document to explain diffrent aspect about communication between microservices
+:sectnums:
+
+=== CAPA events
+
+image::../diagrams/Sequence_CAPA.png[]
+
+image::../diagrams/CAPA_Event_From_AC.png[]
+
+(1) PLATO Proxy retrieve new events from event id X
+
+(2) Autocontrol return the list of events from lastEventId = X. List contains events with submited CAPA
+
+(3) PLATO Proxy store events and process data
+
+(4) PLATO Proxy publishes events (CAPA update). PLATO Backoffice listen events
+
+(5) PLATO Backoffice update CAPA
+
+=== Close Inspection in PLATO
+
+image::../diagrams/Inspection_Event_To_AC.png[]
+
+(1) Inspector close inspection in PLATO BackOffice. PLATO Backoffice store update information
+
+(2) PLATO Backoffice publishes the closed Inspection, Autocontrol Proxy listens event
+
+(3) Autocontrol Proxy stores event
+
+(4) Autocontrol Proxy publishes event to Autocontrol
+
+image::../diagrams/Inspection_Event_To_AC_scenario1.png[]
+
+=== Scenario 1 : Error in Autocontrol Proxy
+
+(1) Inspector close inspection in PLATO BackOffice. PLATO Backoffice store update information
+
+(2) PLATO Backoffice publishes the closed Inspection, Autocontrol Proxy listens event
+
+(3) Autocontrol Proxy give an exception
+
+(4) Autocontrol Proxy rollback event "Failed to process msg close inspection"
+
+(5) PLATO Backoffice updates shared inpection status to "PROCESS Failed with Proxy"
+
+=== Scenarion 2 : Error during sharing to Autocontrol
+
+(6) Autocontrol Proxy publishes event to Autocontrol
+
+(7) Autcontrol return an error X
+
+(8) Autocontrol Proxy store status for event X "Failed"
+
+(9) Autocontrol Proxy publishes rollback event "Failed send inspection to Autocontrol"
+
+(10) PLATO Backoffice update shared inspection status to "PROCESS Failed with Autocontrol"
+
+=== Questions
+
+(1) Does Inspection only send when the inspector close it ?
+
+(2) does CAPA event send only event when Officine actor submit all ? or Can submit one by one ?
+
+(3) Event CAPA autocontrol come with the complete list of deficience that include all capa ?

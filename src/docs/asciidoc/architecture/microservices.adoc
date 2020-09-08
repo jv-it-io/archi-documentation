@@ -1,0 +1,425 @@
+== Microservices
+A microservice architecture is about splitting up monolithic applications into smaller components, which achieves the following goals:
+
+ * Easier to scale
+ ** Depending on charge – scale as the number of users grows
+ ** Depending on user functionality – scale some part of the application depending on user’s need
+ *  Faster development
+ ** Loose coupling : Cf. difficulty to migrate a monolithic application at once
+ ** reuse components
+ ** Decoupled lifecycle : continuous change and avoid release train.
+
+Microservices can be defined as a (small) loosely coupled piece of software that can be developed, deployed and scaled independently.
+
+It should be small enough to fit in the head of a developer and big enough to not jeopardize performance (latency), data consistency and maintenance
+
+image::../diagrams/monoVSmicroservice.png[]
+
+=== Service Registry, Service discovery and Health check Service
+As microservice instances are typically assigned dynamically, the communication between them can't be based on a static  IP-port configuration.
+
+A service registry is a component responsible for keeping trace of currently available microservice and their instances.
+To keep track of the available service, the service registry use an health check service responsible for monitoring the status of each microservice.
+Each microservice  must send their status periodically to the healhcheck service.
+If a microservice goes down, the health check service will stop receiving the heartbeat and will notify the registry service to deregister the service.
+Similarly when the microservice resumes the heartbeat is sent to the health check service. uppn receiving a few positive, the availability inforation is updated in the service registry.
+
+The service registry has details about the services availability but in order to discover where the
+required service is and which services to connect, a client need to query a service discovery component.
+
+The service discovery queries the service registry to obtain the list of service and routes the incoming client's request to the corresponding service instance.
+
+The service discovery will be implemented at the application level based on combination of two patterns:footnote:[another option should be to use the built-in service discovery and registry of deployment platform as docker and K8s. This latest solution has the advantage to work with non spring application ]
+****
+ Pattern: Self registration
+ A service instance registers itself with the service registry.
+ http://microservices.io/patterns/self-registration.html.
+****
+
+****
+ Pattern: Client-side discovery
+ A service client retrieves the list of available service instances from the service registry and load balances across them.
+ http://microservices.io/patterns/client-side-discovery.html.
+****
+All microservices should register themselves to the registry service when the service is started and share heart beat with the healh check service:footnote:[In practice, we will use a pull mechanism. The Health check service will query the availiability of the registered service periodically].
+
+If a microservice wants to communicate with another one, it  looks up the service discovery.
+The service discovery returns all the instances of that target microservice to the caller service.
+Then it is the responsibility of the caller service to choose which instance to send request.
+
+
+=== Centralized Configuration
+
+An application must be deployed with it's configuration:footnote:[configuration is defined here as litterals values that may change from one environment to another: paswword, hostname, feature flags. see http://12factor.net/config] but due to the dynamic nature of the microservice architecture, the traditional approach of configuration file package with the application is not feasible.
+
+A configuration server is a component used to store the configuration of all microservice.
+
+As the configuration also differs based on the environment, the Cconfig server should alco be able to take the envronment int account.
+Spring cloud config - GIT
+
+=== Jhipster Registry
+
+The Jhipster Registry is a runtime application that can be used as a service registry, Service discovery and as configuration server and made from
+
+* Netflix Eureka server
+* Spring cloud config server
+
+====  Netflix Eureka
+Eureka (https://github.com/Netflix/eureka) consists of the following:
+
+* The Eureka server : a REST-based service used for locating services for load balancing and failover middle tiers.
+* The Eureka client : Eureka provides a Java-based client, which makes the interaction between services seamless and provide a simple round robin-based load balancing by default:footnote:[The load
+balancing algorithm can be customized as needed with a wrapper.They cannot provide sticky sessions.]
+
+Eureka prefers availability over consistency: it shares the complete configuration with the  microservices. So a microservice ia able to run even when the Eureka server goes down.
+
+
+==== Spring cloud config server
+
+Spring cloud config server (https://github.com/spring-cloud/spring-cloud-config) provides server and client-side support for external configuration.
+The cloud config server, manage all external properties across all environments based on the spring profiles.
+The configuration is stored and versioned  in a Git repository secured via SSH:footnote:[or in a file system for local development]
+
+Spring Cloud config allows refreshable configuration : it's possiblme to change a configuration without restarting the microservice
+
+
+The Jhipster registry also provide a dahsboard for the configuration and the healthcheck of each µservice.
+
+
+As the Jhispter registry is a major component (SPF) In production, it must run  in a high availability cluster for better consistency (Eureka) .
+
+Should have an  high availability
+
+=== Authentification
+
+[TODO : add explanation about OAUTH2 & openid flow]
+
+Keycloak https://www.keycloak.org/  is the default identity provider (as OpenID Connect server) used for microservice applications.
+
+For regular user, Keycloak is used as a user federation provider behind the Active directory. The active directory stores user and credentials information, the keycloak validates credentials from the active directory and pull identity information.
+
+===== Microservice to microservice authentication
+
+When a microservice call another microservice on behalf of a the user, the caller retrieve the token id from the user session and forward it to the requested
+
+It's sometime necessary that a µservice call another one without having a user token. in this case,  keycloak support the x509 mutual SSL authentication.
+
+WARNING: Openid is not stateless.
+
+=== API Gateway as Edge server and more
+
+In a microservices architecture, some microservices must be available outside of the system landscape while the remaining microservices should be hidden from external access.
+The exposed microservices must be protected against requests from malicious clients.
+
+A Edge server is a component that will use as an entry point to access all the running services.
+
+The edge server is deployed a reverse proxy and can be integrated with a discovery service to provide dynamic load balancing capabilities.
+
+A Jhipster API gateway is a particular microservice used as a Edge server that provides
+
+* HTTP requests routing
+* Security (via openid)
+* Automatic documentation
+* Rate limiting:footnote:[Not used for internal application]
+* Access Control Policy
+
+==== HTTP requests routing
+
+****
+ Pattern: Circuit breaker
+ A proxy that immediately rejects invocations for a timeout period after the number of consecutive failures exceeds a specified threshold.
+ http://microservices.io/patterns/reliability/circuit-breaker.html.
+****
+
+The Jhipster gateway interacts with the Jhipster registry to retrieve the location of the requested services.   Is integrate Netflix Zuul and Hystrix.
+
+===== Netflix Zuul
+Netlix Zull is a front door for all the requests (gatekeeper). It acts as
+an edge service application. Zuul is built to enable dynamic routing, monitoring, resiliency, and
+security among the services. It also has the ability to dynamically route requests as needed.
+
+* Zuul works based on different types of filter for
+* Authentication and security: To identify each resource's authentication requirements and to reject requests that do not satisfy the requirements
+* Insights and monitoring: To track data and statistics at the edge and to give an insight into the production application
+* Dynamic routing: To dynamically route requests to different backend clusters as needed based on health and other factors
+
+====== Hystrix
+
+Hystrix (https://github.com/Netflix/Hystrix) is a library designed to act as a circuit breaker by isolating points of access to remote systems and avoiding cascading failures.
+
+Hystrix is designed to do the following:
+* Stop failure cascades in a complex distributed system
+* Protect the system from the failures of dependencies over the network
+* Control the latency of the system
+* Recover rapidly and fail faster to prevent cascading
+* Fall back and gracefully degrade when possible
+
+
+==== Automatic documentation
+
+The gateway exposes the Swagger API definitions of the services it proxifies.
+
+==== Access Control policy
+
+By default all registered microservices in a the Jhipster Registry are available through the gateway. But it's possible to exclude specific api using the Control policy filter.
+
+=== Centralized Monitoring and alarms
+
+In a microservice architecture, services must be monitored  continuously and any issues should cause alerts immediately.
+
+Prometheus consists of the following:
+*  Prometheus server, which is responsible for scraping and storing the time series data
+*  Libraries to instrument the application code (available in spring)
+*  A push gateway for supporting short-lived jobs
+*  An exporter to Grafana to visualize data
+*  An alert manager
+*  Other support tools
+
+Prometheus uses Grafana (https://grafana.com/) to visualize the metrics.
+
+=== Centralized Log analysis
+Monolithic application writes log events to log files that are stored on the local machine the application runs on.
+In a microservice architecture, this approach results in a large numbers of files disseminated on the infrastructure landscape
+
+The solution is to add a new component that can manage centralized logging.
+
+The Jhipster Console (https://github.com/Jhipster/Jhipster-console)  is based on the ELK (Elasticsearch - Logstash -  Kibana) stack and is used as a centralized component responsible for
+
+ * collecting log event from microservices (Logstash - https://www.elastic.co/products/logstash)
+ * storing log events in a structured and searchable way in a central database (Elasticsearch )
+ * providing API's and graphical interface tools for querying and analyzing log events (kibana - https://www.elastic.co/products/kibana)
+
+=== Distributed Tracing
+
+As any distributed system, a microservice architecture need to track message between component while processing an client call.
+
+To track the processing between cooperating microservices, all related requests and messages must be marked with a common correlation ID and that the correlation ID is part of all log events.
+Based on a correlation ID, we can use the centralized logging service to find all related log events.
+
+Spring Cloud comes with Spring Cloud Sleuth, which can mark requests and messages/events that are part of the same processing flow with a common correlation ID.
+Spring Cloud Sleuth can also decorate log messages with correlation IDs to make it easier to track log messages from different microservices that come from the same processing flow
+
+
+
+==== Zipkin
+Zipkin (https://zipkin.io/) is a distributed tracing system used to collect timing data send by Spring cloud sleuth and helps to search the data.
+Zipkin is able to creates a dependency diagram based on the received traced requests for each of the registered services .
+
+
+===  Communication between microservices
+
+==== Synchronous Remote Procedure
+
+****
+ Pattern: Remote procedure invocation
+ A client invokes a service using a synchronous, remote procedure invocation-based protocol, such as REST
+ http://microservices.io/patterns/communication-style/messaging.html.
+****
+
+===== Benefits to using REST:
+
+* It’s simple and familiar.
+* Easy to test (postman,..)
+* It directly supports request/response style communication.
+* HTTP is firewall friendly.
+* Simplify architecture as it doesn't require any particular broker.
+
+===== drawbacks to using REST:
+
+* nly supports the request/response style of communication.
+* Reduced availability. Because the client and service communicate directly without an intermediary to buffer messages, they must both be running for the duration of the exchange.
+* Clients must know the locations (URLs) of the service instances(s)
+* Fetching multiple resources in a single request is challenging.
+* difficult to map multiple update operations to HTTP verbs.
+* should also use a circuit breaker
+
+
+
+
+==== Asynchronous Message
+
+****
+ Pattern: Messaging
+ A client invokes a service using asynchronous messaging.
+ http://microservices.io/patterns/communication-style/messaging.html.
+****
+
+Using a message broker:footnote[It's possible to implements messaging without broker, but we will not descibe this in this document]
+
+A message broker is an intermediary through which all messages flow.
+A sender writes the message to the message broker, and  the message broker delivers it to the receiver.
+
+===== Benefits of broker-based messaging
+
+* Loose coupling: A client makes a request by simply sending a message to the appropriate channel. The client is completely unaware of the service instances. (no need of discovery)
+* Message buffering: The message broker buffers messages until they can be processed. With a synchronous request/response protocol such as HTTP, both the client and service must be available for the duration of the exchange. With messaging, though, messages will queue up until they can be processed by the consumer. This means, for example, that an online store can accept orders from customers even when the order-fulfillment system is slow or unavailable. The messages will simply queue up until they can be processed.
+* Flexible communication:  Messaging supports differnt kind the interaction as one-way notifications, publish-subscribe, publish-async response.
+* Explicit interprocess communication: RPC-based mechanism attempts to make invoking a remote service look the same as calling a local service. But due to the laws of physics and the possibility of partial failure, they’re in fact quite different. Messaging makes these differences very explicit, so developers aren’t lulled into a false sense of security.
+
+===== Drawbacks of broker based messaging:
+
+* Potential performance bottleneck:  There is a risk that the message broker could be a performance bottleneck.
+* Potential single point of failure:  It’s essential that the message broker is highly available—otherwise, system reliability will be impacted.
+* Additional operational complexity— The messaging system is yet another system component that must be installed, configured, and operated.
+
+
+WARNING: Message Order and duplicate messages : Even if the broker guarantee message ordering, it could arrive in particular circumstances (error recovery, process latency) that the messages arrive in different order or duplicate. It's always better to write idempotent message handler and track messages to discard duplicate.
+
+
+TIP: Synchronous communication as REST reduces availability
+Although REST is an extremely popular IPC mechanism it’s a synchronous protocol: an HTTP client must wait for the service to send a response. Whenever services communicate using a synchronous protocol, the availability of the application is reduced.
+
+=== Managing transaction in Microservices
+
+ACID (Atomicity, Consistency, Isolation, Durability) transactions are the key element to maintain data consistency.
+
+In a microservice architecture, transactions that are within a single microservice MUST use ACID transaction. However, it's is not possible to maintain transaction for operations that update data owned by multiple microservices.
+
+The traditional approach of the distributed transaction (XA:footnote:[see https://en.wikipedia.org/wiki/X/Open_XA]]) using two-phase commit implies that:
+
+. all components participating in the transaction should be available to complete.
+. all communication are synchronous
+. all components have to be XA-Compliant
+
+The first two point involves a reduction of the overall system avalaibility:footnote[If only 2 component with 99.5% availability are participating in a distributed transation, the global availability felt to 99%. ]
+
+It's confirmed by Eric Brewer’s CAP theorem, which  states that a system can only have two of the following three properties: consistency, availability, and partition tolerance
+
+On another point,  modern technologies as NoSQL database (Mongodb) and AMQP message broker (RabbitMQ) don't support XA.
+
+The decomposition of the application in microservice and the design of the user's operation should focus on  avoiding distributed transaction.
+
+However, if a it's not possible to avoid a distributed transaction of data accross multiple µservices, SAGA Pattern should be used.
+
+****
+ Pattern SAGA:
+ Maintain data consistency across services using a sequence of local transactions that are coordinated using asynchronous messaging
+ http://microservice.io/patterns/data.saga.html
+****
+
+The operation initiates the first step of the saga. The completion of a local transaction triggers the execution of the next level transaction. Using asynchronous messages implies that all the steps of the saga are executed even if one or mlore of the participant are temporarily unavailable.
+Otherwise, as each local transaction commits its changes a saga must be rolled back using compensating transactions if any.
+
+* Choregraphy: distribute the decision making and sequencing among the saga participants. They primarily communicate by exchanging event.
+* Orchestration: Centralize a saga's coordination logic ia saga orchestrator. The saga orchestrator send command messages to saga participants telling them each operation to perform.
+
+==== Choregraphy-based saga
+
+IMPORTANT: All saga participants must publish an event as part of a database transaction.
+
+===== Benefits
+
+* Simplicity : services publish events when they create, update, delete business objects
+* Loose coupling : participants subscibe to event and don't have direct knowledge of each other
+
+===== Drawbacks
+* More difficult to understand: the implementation is distributed between services
+* Cyclic dependencies : participants can subscribes to each other's events which often creates cyclic dependencies.
+
+TIP: use Chroregraphy for simple sagas.
+
+==== Orchestration-based saga
+
+The saga orchestrator communicates with the participants using command/async  reply-style interaction. To execute a saga step, it sends a command message to a participant telling it what operation to perform. After the saga participant has performed the operation, it sends a reply message to the orchestrator.
+The orchestrator then processes the message and determines which saga step to perform next.
+
+TIP:   Modeling saga orchestrators as state machines
+
+===== Benefits
+
+* Simpler dependencies :cyclic dependencies are not posisble as  orchestrators depends of the participants but not vice versa.
+* Less coupling each service implements an api that is invoked by the orchestratorbut ignore other participants events.
+* Improve separation of concerns and simplifies the business logic : The saga coordination logic is centralized in the orchestrator. 
+
+===== Drawbacks
+* risk of centralizing too mush business logic in the orchestrator.
+
+
+
+=== Implementing queries in microservices architecture
+
+This chapter is about querying related entities of different microservices.
+
+==== API Composition
+
+****
+Pattern: API composition
+Implement a query that retrieves data from several services by querying each service via its API and combining the results. See http://microservices.io/patterns/data/api-composition.html.
+****
+
+API Composer could be
+
+* the Front end client.
+* the API Gateway
+* a standalone microservice
+
+
+TIP: API composers should use a reactive programming model.
+
+===== The benefits of the API composition pattern
+This pattern is a simple and intuitive way to implement query operations in a microservice architecture.
+
+===== The drawbacks of the API composition pattern
+
+* Increased overhead: multiple queries and database queries use more computing and network resources
+* Risk of reduced availability: the availability of an operation declines with the number of services that are involved
+* Lack of transactional data consistency : multiple database queries can return inconsistent data.
+
+TIP: Use this pattern in the API gateway for query without pagination. it's also possible to speed up performance by adding a cache but it increase the risk of inconsistency.
+
+==== Command and Query
+
+* Using the API composition pattern to retrieve data scattered across multiple services results in expensive, inefficient in-memory joins.
+* The service that owns the data stores the data in a form or in a database that doesn’t efficiently support the required query.
+* The need to separate concerns means that the service that owns the data isn’t the service that should implement the query operation.
+
+
+****
+ Pattern: Command query responsibility segregation
+ Implement a query that needs data from several services by using events to maintain a read-only view that replicates data from the services. See http://microservices.io/patterns/data/cqrs.html.
+****
+
+===== The benefits of CQRS
+
+
+* Enables the efficient implementation of queries in a microservice architecture
+* Enables the efficient implementation of diverse queries
+* Makes querying possible in an event sourcing-based application
+* Improves separation of concerns
+
+//Enables the efficient implementation of queries in a microservice architecture
+//One benefit of the CQRS pattern is that it efficiently implements queries that retrieve data owned by multiple services. As described earlier, using the API composition pattern to implement queries sometimes results in expensive, inefficient in-memory joins of large datasets. For those queries, it’s more efficient to use an easily queried CQRS view that pre-joins the data from two or more services.
+//
+//Enables the efficient implementation of diverse queries
+//Another benefit of CQRS is that it enables an application or service to efficiently implement a diverse set of queries. Attempting to support all queries using a single persistent data model is often challenging and in some cases impossible. Some NoSQL databases have very limited querying capabilities. Even when a database has extensions to support a particular kind of query, using a specialized database is often more efficient. The CQRS pattern avoids the limitations of a single datastore by defining one or more views, each of which efficiently implements specific queries.
+//
+//Enables querying in an event sourcing-based application
+//CQRS also overcomes a major limitation of event sourcing. An event store only supports primary key-based queries. The CQRS pattern addresses this limitation by defining one or more views of the aggregates, which are kept up-to-date, by subscribing to the streams of events that are published by the event sourcing-based aggregates. As a result, an event sourcing-based application invariably uses CQRS.
+//
+//Improves separation of concerns
+//Another benefit of CQRS is that it separates concerns. A domain model and its corresponding persistent data model don’t handle both commands and queries. The CQRS pattern defines separate code modules and database schemas for the command and query sides of a service. By separating concerns, the command side and query side are likely to be simpler and easier to maintain.
+//
+//Moreover, CQRS enables the service that implements a query to be different than the service that owns the data. For example, earlier I described how even though Restaurant Service owns the data that’s queried by the findAvailableRestaurants query operation, it makes sense for another service to implement such a critical, high-volume query. A CQRS query service maintains a view by subscribing to the events published by the service or services that own the data.
+
+===== The drawbacks of CQRS
+
+
+* More complex architecture
+* Dealing with the replication lag
+
+
+//Let’s look at these drawbacks, starting with the increased complexity.
+//
+//More complex architecture
+//One drawback of CQRS is that it adds complexity. Developers must write the query-side services that update and query the views. There is also the extra operational complexity of managing and operating the extra datastores. What’s more, an application might use different types of databases, which adds further complexity for both developers and operations.
+//
+//Dealing with the replication lag
+//Another drawback of CQRS is dealing with the “lag” between the command-side and the query-side views. As you might expect, there’s delay between when the command side publishes an event and when that event is processed by the query side and the view updated. A client application that updates an aggregate and then immediately queries a view may see the previous version of the aggregate. It must often be written in a way that avoids exposing these potential inconsistencies to the user.
+//
+//One solution is for the command-side and query-side APIs to supply the client with version information that enables it to tell that the query side is out-of-date. A client can poll the query-side view until it’s up-to-date. Shortly I’ll discuss how the service APIs can enable a client to do this.
+//
+//A UI application such as a native mobile application or single page JavaScript application can handle replication lag by updating its local model once the command is successful without issuing a query. It can, for example, update its model using data returned by the command. Hopefully, when a user action triggers a query, the view will be up-to-date. One drawback of this approach is that the UI code may need to duplicate server-side code in order to update its model.
+
+
+TIP: As soon as the query involves entity of different microservice should be paginated , use CQRS
+

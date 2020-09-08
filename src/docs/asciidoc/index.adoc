@@ -1,0 +1,31 @@
+:include_dir: architecture
+
+= Plato Architecture: Documentation
+:toc-title: Contents
+:toc: preambule
+:description: Document to explain the architectural view of plato and recommendation for dev
+:sectnums:
+
+include::{include_dir}/microservices.adoc[]
+
+include::{include_dir}/diagrams.adoc[]
+
+include::{include_dir}/autocontrole-communication-cases[]
+
+include::{include_dir}/presentation-layer[]
+
+include::{include_dir}/plato-offline.adoc[]
+
+include::{include_dir}/business-layer[]
+
+include::{include_dir}/persistence-layer.adoc[]
+
+include::{include_dir}/db-layer.adoc[]
+
+include::{include_dir}/datawarehouse.adoc[]
+
+include::{include_dir}/bibliography.adoc[]
+
+
+
+

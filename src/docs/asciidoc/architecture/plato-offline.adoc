@@ -1,0 +1,18 @@
+== Plato offline mode
+
+Some feature of the application should be accessible for an inspector during, for example, an inspection in a pharmacy.
+(access to inspection history of the inspection's pharmacies, findings,...)
+
+Actual version of Plato has already an offline mode. But for some reason of the deprecated technology we are using, we have
+to find another solution.
+
+=== Using service workers
+
+a worker is a script that runs on a thread separate to the browser’s main thread. Service worker can't access to the DOM or
+interact with users, but it can communicate with our script by using an API postMessage. This is a proxy between the webapp to
+intercept all server requests  and can answer with a cache or by retrieving data from Localstorage or indexDB. Service worker
+can allow your application to be available offline !
+
+image::../diagrams/serviceworker.png[]
+
+

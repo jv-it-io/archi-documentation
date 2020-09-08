@@ -1,0 +1,70 @@
+== Db Layer
+
+
+
+=== Using Json standard
+as we are using Json standard for almost all of our exchange, we should use a technical solution to use this standard.
+So here is MongoDb.
+
+==== MongoDB
+===== Transaction
+As we don't always use embedded documents, but instead we make relation between documents. So that we have to validate
+or canceled a set of operation.
+Multi documents ACID (Atomicity, consistency, isolation, durability) transactions in mongodb (from version 4.2)
+ensure atomic operations even on different collections or DB.
+
+* multi-document transactions are available for replica set deployments only (transaction can be use on a standalone server
+but a replicaset should be config for a single node)
+* a collection MUST exist in order to use transactions
+* a collection cannot be created or dropped inside a transaction
+* an index cannot be created or dropped inside a transaction
+* non-CRUD operations are not permitted inside a transaction (for example, administrative commands like createUser are not permitted )
+* a transaction cannot read or write in config, admin, and local databases
+* a transaction cannot write to system.* collections
+* the size of a transaction is limited to 16MB
+* by default a transaction that executes for longer then 60 seconds will automatically expire
+
+
+https://docs.mongodb.com/manual/core/transactions/
+https://docs.mongodb.com/manual/core/write-operations-atomicity/
+
+===== Replication
+We can't assume that all server will be available 24h/7D (for perform a maintenance, disaster, ...).
+Replication is a concept of maintaining multiple copies of data. It ensures that if the server goes down, you can still
+have access to your data. In replication, instead to have a single database server (a single node), we have multiple of it.
+One node (primary node) handles the data and the remaining nodes (secondary nodes) in the set sync with it and replicate
+all data that's created through an asynchronous mechanism. With such a mechanism, when the primary node goes down, one of
+the secondaries take its place as primary node (failover process).
+The selection of which secondary will become a primary realized through the election process. The election is done by the vote
+from the secondaries nodes for one another primary.
+
+image::../diagrams/replicaset_svg.svg[]
+
+
+https://docs.mongodb.com/manual/replication/
+
+===== Sharding
+
+With the replicaset we have more than one server. Each of them contain the entire dataset. As the dataset grows to the point
+where our machines can't properly service client applications, one of our options is just to make the machines better.
+We could increase the capacity of individual machines, so they have more RAM, or disk space, or maybe a more powerful CPU.
+This is referred to as vertical scaling.
+This could potentially become very expensive.
+Besides, cloud-based providers aren't going to let us scale vertically forever.
+They'll eventually put a limit on the possible hardware configurations, which would effectively limit our storage layer.
+In MongoDB, scaling is done horizontally, which means instead of making the individual machines better, we just add more machines and then distribute the dataset among those machines.
+The way we distribute data in MongoDB is called Sharding.
+With sharding we divide dataset in small pieces and distribute the pieces accross as many shards as we want.
+Together, the shards make up a sharded cluster. Each shard is deployed as a replicaset.
+
+https://docs.mongodb.com/manual/sharding/
+
+===== Change Stream
+
+Change streams allow applications to access real-time data changes without the complexity and risk of
+tailing the oplog. Applications can use change streams to subscribe to all data changes on a single
+collection, a database, or an entire deployment, and immediately react to them. Because change streams
+use the aggregation framework, applications can also filter for specific changes or
+transform the notifications at will.
+
+https://docs.mongodb.com/manual/changeStreams/
