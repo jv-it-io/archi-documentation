@@ -26,6 +26,9 @@ The Autocontrol Proxy Service can subscribe to the outbox service and process th
 
 icon:thumbs-up[] (+) reuse a service that will be in place in the Plato environment
 
+==== File Communication with autocontrol
+
+image::../diagrams/CommunicationDocument.png[]
 
 
 

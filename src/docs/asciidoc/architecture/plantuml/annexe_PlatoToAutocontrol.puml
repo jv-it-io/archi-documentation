@@ -1,0 +1,17 @@
+@startuml
+
+PlatoBackoffice -> PlatoBackoffice: Inspector add annexe in a dossier
+
+PlatoBackoffice -> SharedGridFsDB: Save document
+PlatoBackoffice -> PlatoBackofficeDB: Save document metadata
+
+PlatoOutbox <- PlatoBackofficeDB: get notification  of the operations
+PlatoOutbox -> AutocontrolProxy: send message AddAnnexe
+
+AutocontrolProxy -> SharedGridFsDB: get document (file)
+
+AutocontrolProxy -> Autocontrol: addAnnexe to dossier apbnr xxx
+AutocontrolProxy -> Autocontrol: send Notification
+AutocontrolProxy -> Autocontrol: create alert
+
+@enduml

@@ -1,0 +1,19 @@
+@startuml
+Autocontrol <- AutocontrolProxy: getEvent()
+Autocontrol -> AutocontrolProxy: event notification add annexe
+
+Autocontrol <- AutocontrolProxy: getDocumentMetaData
+Autocontrol -> AutocontrolProxy: send document metadata
+AutocontrolProxy -> PlatoBackoffice: send notification add annexe with metadata
+Autocontrol <- AutocontrolProxy: getDocument
+Autocontrol -> AutocontrolProxy: send Document
+
+
+
+AutocontrolProxy -> SharedGridFsDB: save document (file)
+
+AutocontrolProxy -> PlatoBackoffice: send notification document is available
+
+PlatoBackoffice -> PlatoBackoffice: update metadata (id gridfs) and save document information in dossier
+
+@enduml
