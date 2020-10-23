@@ -1,3 +1,16 @@
+:include_dir: architecture
+:include_dir: plantuml
+
+= Plato Architecture: Documentation
+:toc-title: Contents
+:toc: preambule
+:description: Document to explain the architectural view of plato and recommendation for dev
+:sectnums:
+
+include::{include_dir}/diagrams.adoc[]
+
+== Microservices
+
 == Autocontrol communication
 
 :icons: font
@@ -14,22 +27,17 @@ When the information is getting from Autocontrol, the Autocontrol Proxy Service 
 Plato Service is listening to the queue for new messages, when a message is coming, it consumes the message.
 BackOffice respond to the message by using RPC method of Rabbit.
 
-icon:thumbs-up[] (+) Several services can receive the message (topic).
-
-icon:thumbs-up[] (+) Can receive automatic response by RPC queue.
-
-icon:thumbs-up[] (+) Consume the message when the service is available.
-
 ==== Communication Plato to autocontrol
 In that case, we can use Plato Outbox (use to send information from Plato Event to other system, as Datawarehouse)
 The Autocontrol Proxy Service can subscribe to the outbox service and process the event for send UPDATE to Autocontrol.
-
-icon:thumbs-up[] (+) reuse a service that will be in place in the Plato environment
 
 ==== Communication with autocontrol with a file
 
 image::../diagrams/CommunicationDocument.png[]
 
+==== Autocontrol Event Process
+
+===== Classes Model
 
 
 
