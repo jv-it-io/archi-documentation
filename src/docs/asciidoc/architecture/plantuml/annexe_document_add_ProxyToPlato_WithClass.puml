@@ -1,0 +1,37 @@
+@startuml
+box "Autocontrol" #LightBlue
+participant DossierControllerApi
+participant EventControllerApi
+end box
+
+box "AutocontrolProxy" #LightBlue
+participant ItemReader
+participant ItemProcessor
+participant ItemWriter
+participant AnnexeDocumentAddService
+participant AutocontrolEventService
+participant BackOfficePlatoDocumentService
+participant CommandService
+end box
+
+box "PlatoBackoffice" #LightBlue
+participant AnnexeDocumentAddReceiver
+end box
+
+EventControllerApi <-  ItemReader: getEventsUsingGET()
+EventControllerApi ->  ItemReader: return eventDtolist
+'loop eventListDto.items.size
+            ItemProcessor -> AnnexeDocumentAddService: process(EventDto)
+            AnnexeDocumentAddService -> DossierControllerApi: getAnnexDocumentUsingGET(Long annexId, Long dossierId)
+            AnnexeDocumentAddService <- DossierControllerApi: return ResponseEntity
+            AnnexeDocumentAddService -> DossierControllerApi: getDossierUsingGET(Long dossierId)
+            AnnexeDocumentAddService <- DossierControllerApi: return DossierDto
+            AnnexeDocumentAddService -> BackOfficePlatoDocumentService: store()
+            BackOfficePlatoDocumentService -> BackOfficePlatoDocumentService: createCommand()
+            BackOfficePlatoDocumentService -> CommandService: addAnnexeToApbNbr(AnnexeDocumentAddCommand command) <<convertSendAndReceive()>>
+            CommandService -> AnnexeDocumentAddReceiver: addAnnexeToApbNbr(AnnexeDocumentAddCommand command) <<convertSendAndReceive()>>
+'end
+
+ItemWriter -> AutocontrolEventService: saveEvent(eventDto)
+
+@enduml

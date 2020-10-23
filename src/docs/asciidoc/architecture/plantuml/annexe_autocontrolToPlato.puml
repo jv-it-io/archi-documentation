@@ -1,19 +1,34 @@
 @startuml
-Autocontrol <- AutocontrolProxy: getEvent()
+box "External Services" #LightBlue
+participant Autocontrol
+participant AutocontrolProxy
+end box
+
+box "Internal Services" #LightBlue
+participant SharedGridFsDB
+participant PlatoBackoffice
+participant PlatoOutBox
+end box
+Autocontrol <- AutocontrolProxy: getEvent(lastToken)
 Autocontrol -> AutocontrolProxy: event notification add annexe
-
-Autocontrol <- AutocontrolProxy: getDocumentMetaData
-Autocontrol -> AutocontrolProxy: send document metadata
-AutocontrolProxy -> PlatoBackoffice: send notification add annexe with metadata
-Autocontrol <- AutocontrolProxy: getDocument
-Autocontrol -> AutocontrolProxy: send Document
+Autocontrol <- AutocontrolProxy: getDocument(href)
+Autocontrol <- AutocontrolProxy: getApbNumber(dossierNumber)
+AutocontrolProxy -> SharedGridFsDB: saveDocument(file)
+AutocontrolProxy -> PlatoBackoffice: addAnnexeToApbNbr(fileIdGridFS, apbNbr) <<convertSendAndReceive()>>
 
 
+activate PlatoBackoffice #FFBBBB
 
-AutocontrolProxy -> SharedGridFsDB: save document (file)
+PlatoBackoffice -> PlatoBackoffice: createAnnexeDocument(idGridFS)
+PlatoBackoffice -> PlatoBackoffice: updatePharmacyWithApbNbr(idAnnexeDocument, apbNbr)
 
-AutocontrolProxy -> PlatoBackoffice: send notification document is available
+return ACCEPTED or REJECTED
 
-PlatoBackoffice -> PlatoBackoffice: update metadata (id gridfs) and save document information in dossier
+PlatoOutBox <- PlatoBackoffice : receiveNotification update pharmacy (if ACCEPTED)
+PlatoOutBox -> AutocontrolProxy: outbox event update pharmacy
+
+AutocontrolProxy -> AutocontrolProxy : updateCommandProcessed update pharmacy with annexe
+
+
 
 @enduml

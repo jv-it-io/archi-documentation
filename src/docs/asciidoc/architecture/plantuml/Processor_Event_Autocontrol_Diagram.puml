@@ -1,0 +1,53 @@
+@startuml
+package org.springframework.batch.item {
+interface ItemProcessor
+}
+
+package be.fgov.famhp.autocontrol.pharmacy.proxy.batch.processor {
+class ItemProcessorEvent implements ItemProcessor {
+Map<String, ProcessorEventService> processorEventMap
+    process(EventDto event)
+}
+}
+
+package be.fgov.famhp.autocontrol.pharmacy.proxy.service.processor{
+    interface ProcessorEventService{
+        processEvent(EventDto event)
+    }
+
+    class AnnexeDocumentAddedProcessor implements ProcessorEventService{
+       getDocumentInAutocontrol(Long annexeId, Long dossierId)
+       getApbNbrInAutocontrol(Long dossierId)
+       createCommand(EventDto event, ObjectId gridFsId, String apbNbr)
+       sendToPlato(AddAnnexeDocumentCommand command)
+    }
+
+    class NewFormCompletedProcessor implements ProcessorEventService{
+
+    }
+
+    class FormCopyCompletedProcessor implements ProcessorEventService{
+
+    }
+}
+
+package be.fgov.fagg.common.command{
+    class Command {
+    }
+}
+
+package be.fgov.famhp.plato.backoffice.command{
+    class NotificationCommand extends Command {
+    }
+    class AddAnnexeDocumentCommand extends Command {
+    }
+    class NewFormCompletedCommand extends Command {
+    }
+    class FormCopyCompletedCommand extends Command {
+    }
+}
+
+
+
+
+@enduml
