@@ -39,5 +39,19 @@ image::../diagrams/CommunicationDocument.png[]
 
 ===== Classes Model
 
+image::../plantuml/Processor_Event_Autocontrol_Diagram.png[]
+
+- All event received by using the reader of springbatch, are processed with the ItemProcessEvent class.
+- Then, following the eventType of the event, the event is process by a class that implement the ProcessorEventService interface
+- In the plato backoffice side, there are command classes corresponding to autocontrol event
+
+===== Sequence diagrams
+
+====== Event ANNEXE_DOCUMENT_ADDED
+
+
+image::../plantuml/annexe_autocontrolToPlato.png[]
+
+image::../plantuml/annexe_document_add_ProxyToPlato_WithClass.png[]
 
 

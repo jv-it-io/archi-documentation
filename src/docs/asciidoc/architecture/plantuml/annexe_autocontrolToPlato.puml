@@ -1,33 +1,44 @@
 @startuml
-box "External Services" #LightBlue
+title Plato : Get event ANNEXE_DOCUMENT_ADDED from Autocontrol
+
+box "Autocontrol Services" #LightBlue
 participant Autocontrol
 participant AutocontrolProxy
+database AutocontrolProxyDatabase
 end box
 
-box "Internal Services" #LightBlue
+box "Plato Services" #f2d9a7
 participant SharedGridFsDB
 participant PlatoBackoffice
 participant PlatoOutBox
+database "PlatoBackoffice DataBase"
 end box
 Autocontrol <- AutocontrolProxy: getEvent(lastToken)
 Autocontrol -> AutocontrolProxy: event notification add annexe
 Autocontrol <- AutocontrolProxy: getDocument(href)
 Autocontrol <- AutocontrolProxy: getApbNumber(dossierNumber)
 AutocontrolProxy -> SharedGridFsDB: saveDocument(file)
-AutocontrolProxy -> PlatoBackoffice: addAnnexeToApbNbr(fileIdGridFS, apbNbr) <<convertSendAndReceive()>>
+AutocontrolProxy -> AutocontrolProxyDatabase: saveCommand(RECEIVED)
 
 
-activate PlatoBackoffice #FFBBBB
+AutocontrolProxy -> PlatoBackoffice: addAnnexeToApbNbr(Command) <<convertSendAndReceive()>>
+activate AutocontrolProxy
+    activate PlatoBackoffice #FFBBBB
+    PlatoBackoffice -> AutocontrolProxy: update command PROCESSING ???
 
-PlatoBackoffice -> PlatoBackoffice: createAnnexeDocument(idGridFS)
-PlatoBackoffice -> PlatoBackoffice: updatePharmacyWithApbNbr(idAnnexeDocument, apbNbr)
+deactivate AutocontrolProxy
 
-return ACCEPTED or REJECTED
 
-PlatoOutBox <- PlatoBackoffice : receiveNotification update pharmacy (if ACCEPTED)
-PlatoOutBox -> AutocontrolProxy: outbox event update pharmacy
+    PlatoBackoffice -> PlatoBackoffice: createAnnexeDocument(idGridFS)
+    PlatoBackoffice -> PlatoBackoffice: updatePharmacyWithApbNbr(idAnnexeDocument, apbNbr)
+    PlatoOutBox <-- "PlatoBackoffice DataBase" : notify event update pharmacy (if ACCEPTED) (db push)
+    return ACCEPTED or REJECTED
+    deactivate PlatoBackoffice
+
+PlatoOutBox -> AutocontrolProxy: outbox event update
 
 AutocontrolProxy -> AutocontrolProxy : updateCommandProcessed update pharmacy with annexe
+
 
 
 

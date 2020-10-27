@@ -8,30 +8,55 @@ box "AutocontrolProxy" #LightBlue
 participant ItemReader
 participant ItemProcessor
 participant ItemWriter
-participant AnnexeDocumentAddService
+participant AnnexeDocumentAddProcessor
 participant AutocontrolEventService
 participant BackOfficePlatoDocumentService
 participant CommandService
+participant PlatoEventReceiver
+participant CommandHandlerService
 end box
 
 box "PlatoBackoffice" #LightBlue
 participant AnnexeDocumentAddReceiver
+participant CommandHandlerService
+participant PlatoPharmacyService
+participant PlatoBackOfficeDatabase
+participant PharmacyDocumentService
+end box
+
+box "PlatoOutBox" #LightBlue
+participant ChangeStream
+
 end box
 
 EventControllerApi <-  ItemReader: getEventsUsingGET()
 EventControllerApi ->  ItemReader: return eventDtolist
 'loop eventListDto.items.size
-            ItemProcessor -> AnnexeDocumentAddService: process(EventDto)
-            AnnexeDocumentAddService -> DossierControllerApi: getAnnexDocumentUsingGET(Long annexId, Long dossierId)
-            AnnexeDocumentAddService <- DossierControllerApi: return ResponseEntity
-            AnnexeDocumentAddService -> DossierControllerApi: getDossierUsingGET(Long dossierId)
-            AnnexeDocumentAddService <- DossierControllerApi: return DossierDto
-            AnnexeDocumentAddService -> BackOfficePlatoDocumentService: store()
-            BackOfficePlatoDocumentService -> BackOfficePlatoDocumentService: createCommand()
-            BackOfficePlatoDocumentService -> CommandService: addAnnexeToApbNbr(AnnexeDocumentAddCommand command) <<convertSendAndReceive()>>
+            ItemProcessor -> AnnexeDocumentAddProcessor: process(EventDto)
+            AnnexeDocumentAddProcessor -> DossierControllerApi: getAnnexDocumentUsingGET(Long annexId, Long dossierId)
+            AnnexeDocumentAddProcessor <- DossierControllerApi: return ResponseEntity
+            AnnexeDocumentAddProcessor -> DossierControllerApi: getDossierUsingGET(Long dossierId)
+            AnnexeDocumentAddProcessor <- DossierControllerApi: return DossierDto
+            AnnexeDocumentAddProcessor -> BackOfficePlatoDocumentService: store()
+            AnnexeDocumentAddProcessor <- BackOfficePlatoDocumentService: return gridfsId
+            AnnexeDocumentAddProcessor -> CommandService: createAndSendCommand()
             CommandService -> AnnexeDocumentAddReceiver: addAnnexeToApbNbr(AnnexeDocumentAddCommand command) <<convertSendAndReceive()>>
 'end
-
 ItemWriter -> AutocontrolEventService: saveEvent(eventDto)
+
+AnnexeDocumentAddReceiver -> CommandService: updateCommand(PROCESSING) ????
+AnnexeDocumentAddReceiver -> CommandHandlerService: handleCommand(Command command)
+CommandHandlerService -> PlatoPharmacyService: sendDocumentToPharmacies()
+
+CommandHandlerService -> CommandService: UpdateCommand(ACCEPTED or REJECTED)
+
+alt ACCEPTED
+PlatoBackOfficeDatabase --> ChangeStream: notify event (db push)
+ChangeStream -> PlatoEventReceiver: <<convertAndSend()>>
+PlatoEventReceiver -> CommandService: updateService(PROCESSED)
+end
+
+
+
 
 @enduml
