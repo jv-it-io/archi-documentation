@@ -8,7 +8,7 @@ database AutocontrolProxyDatabase
 end box
 
 box "Plato Services" #f2d9a7
-participant SharedGridFsDB
+database SharedGridFsDB
 participant PlatoBackoffice
 participant PlatoOutBox
 database "PlatoBackoffice DataBase"
