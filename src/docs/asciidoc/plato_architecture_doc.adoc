@@ -59,3 +59,12 @@ image::../plantuml/annexe_document_add_ProxyToPlato_WithClass.png[]
 image::../plantuml/annexe_PlatoToAutocontrol.png[]
 
 
+====== Event NEW_FORM_COMPLETED (Autocontrol to Plato)
+
+image::../plantuml/new_form_completed_autocontrolToPlato.png[]
+
+====== Event FORM_COPY_COMPLETED (Autocontrol to Plato)
+
+image::../plantuml/form_copy_completed_autocontrolToPlato.png[]
+
+

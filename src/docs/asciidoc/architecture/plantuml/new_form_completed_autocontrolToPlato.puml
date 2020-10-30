@@ -1,0 +1,42 @@
+@startuml
+title Plato : Get event NEW_FORM_COMPLETED from Autocontrol
+
+box "Autocontrol Services" #LightBlue
+participant Autocontrol
+participant AutocontrolProxy
+database AutocontrolProxyDatabase
+end box
+
+box "Plato Services" #f2d9a7
+participant PlatoBackoffice
+participant PlatoOutBox
+database "PlatoBackoffice DataBase"
+end box
+Autocontrol <- AutocontrolProxy: getEvent(lastToken)
+Autocontrol -> AutocontrolProxy: event notification NEW_FORM_COMPLETED
+AutocontrolProxy -> AutocontrolProxyDatabase: saveCommand(RECEIVED)
+
+
+AutocontrolProxy -> PlatoBackoffice: newFormCompleted(Command) <<convertSendAndReceive()>>
+activate AutocontrolProxy
+    activate PlatoBackoffice #FFBBBB
+    PlatoBackoffice -> AutocontrolProxy: update command PROCESSING ???
+
+deactivate AutocontrolProxy
+
+    alt exist active form
+        PlatoBackoffice -> PlatoBackoffice: update previous form
+    end
+    PlatoBackoffice -> PlatoBackoffice: createNewForm
+    PlatoOutBox <-- "PlatoBackoffice DataBase" : notify event form created (if ACCEPTED) (db push)
+    return ACCEPTED or REJECTED
+    deactivate PlatoBackoffice
+
+PlatoOutBox -> AutocontrolProxy: outbox event update
+
+AutocontrolProxy -> Autocontrol: update form with new dates
+
+AutocontrolProxy -> AutocontrolProxy : updateCommandProcessed update pharmacy with annexe
+
+
+@enduml
