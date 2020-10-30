@@ -47,11 +47,15 @@ image::../plantuml/Processor_Event_Autocontrol_Diagram.png[]
 
 ===== Sequence diagrams
 
-====== Event ANNEXE_DOCUMENT_ADDED
+====== Event ANNEXE_DOCUMENT_ADDED (Autocontrol to Plato)
 
 
 image::../plantuml/annexe_autocontrolToPlato.png[]
 
 image::../plantuml/annexe_document_add_ProxyToPlato_WithClass.png[]
+
+====== Inspector add document(s) to one or more pharmacy (Plato to Autocontrol)
+
+image::../plantuml/annexe_PlatoToAutocontrol.png[]
 
 

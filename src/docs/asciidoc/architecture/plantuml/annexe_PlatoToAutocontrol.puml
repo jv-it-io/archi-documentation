@@ -1,12 +1,32 @@
 @startuml
 
-PlatoBackoffice -> PlatoBackoffice: Inspector add annexe in a dossier
+title Plato : Send document added in a pharmacy to Autocontrol
 
-PlatoBackoffice -> SharedGridFsDB: Save document
-PlatoBackoffice -> PlatoBackofficeDB: Save document metadata
+box "Autocontrol Services" #LightBlue
+participant Autocontrol
+participant AutocontrolProxy
+database AutocontrolProxyDatabase
+end box
 
-PlatoOutbox <- PlatoBackofficeDB: get notification  of the operations
-PlatoOutbox -> AutocontrolProxy: send message AddAnnexe
+box "Plato Services" #f2d9a7
+database SharedGridFsDB
+actor Inspector
+participant PlatoBackoffice
+participant PlatoOutBox
+
+database "PlatoBackoffice DataBase"
+end box
+
+Inspector -> PlatoBackoffice: Inspector add annexe(s) to one or more pharmacies
+
+
+PlatoBackoffice -> SharedGridFsDB: Save file(s)
+activate PlatoBackoffice #FFBBBB
+PlatoBackoffice -> PlatoBackoffice: save document(s)
+PlatoBackoffice -> PlatoBackoffice: add document(s) to pharmacy(ies)
+PlatoOutBox <-- "PlatoBackoffice DataBase" : notify event add document to pharmacy (db push)
+deactivate PlatoBackoffice #FFBBBB
+PlatoOutBox -> AutocontrolProxy: outbox event add document to pharmacy
 
 AutocontrolProxy -> SharedGridFsDB: get document (file)
 
