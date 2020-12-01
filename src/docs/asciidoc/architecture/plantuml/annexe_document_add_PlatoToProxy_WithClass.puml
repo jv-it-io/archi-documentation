@@ -1,0 +1,61 @@
+@startuml
+box "Autocontrol" #LightBlue
+participant DossierControllerApi
+participant EventControllerApi
+end box
+
+box "AutocontrolProxy" #LightBlue
+participant ItemReader
+participant ItemProcessorEvent
+participant ItemWriter
+participant AnnexeDocumentAddedProcessor
+participant AutocontrolEventService
+participant BackOfficePlatoDocumentService
+participant TaskOutboxAnnexeAddedHandler
+participant CommandHandlerService
+end box
+box "FaggCommon" 
+participant CommandService
+end box
+box "PlatoBackoffice" #LightBlue
+participant AnnexeDocumentAddedReceiver
+participant CommandHandlerService
+participant PlatoPharmacyService
+database PlatoBackOfficeDatabase
+participant PharmacyDocumentService
+end box
+
+box "PlatoOutBox" #LightBlue
+participant ChangeStream
+end box
+
+
+EventControllerApi <-  ItemReader: getEventsUsingGET()
+EventControllerApi ->  ItemReader: return eventDtolist
+'loop eventListDto.items.size
+            ItemProcessorEvent -> AnnexeDocumentAddedProcessor: process(EventDto)
+            AnnexeDocumentAddedProcessor -> DossierControllerApi: getAnnexDocumentUsingGET(Long annexId, Long dossierId)
+            AnnexeDocumentAddedProcessor <- DossierControllerApi: return ResponseEntity
+            AnnexeDocumentAddedProcessor -> BackOfficePlatoDocumentService: store()
+            AnnexeDocumentAddedProcessor <- BackOfficePlatoDocumentService: return gridfsId
+            AnnexeDocumentAddedProcessor -> CommandService: createAndSendCommand()
+            CommandService -> AnnexeDocumentAddedReceiver: addAnnexeToApbNbr(AnnexeDocumentAddCommand command) <<convertSendAndReceive()>>
+'end
+ItemWriter -> AutocontrolEventService: saveEvent(eventDto)
+
+AnnexeDocumentAddedReceiver -> CommandHandlerService: handleCommand(Command command)
+CommandHandlerService -> PlatoPharmacyService: sendDocumentToPharmacies()
+
+CommandHandlerService --> AnnexeDocumentAddedReceiver: ResultCommand(ACCEPTED or REJECTED)
+CommandHandlerService --> CommandService: UpdateCommand(ACCEPTED or REJECTED)
+
+alt ACCEPTED
+PlatoBackOfficeDatabase --> ChangeStream: notify event (db push)
+ChangeStream -> TaskOutboxAnnexeAddedHandler: <<convertAndSend()>>
+TaskOutboxAnnexeAddedHandler -> CommandService: updateService(PROCESSED)
+end
+
+
+
+
+@enduml

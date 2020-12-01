@@ -5,6 +5,7 @@ box "Autocontrol Services" #LightBlue
 participant Autocontrol
 participant AutocontrolProxy
 database AutocontrolProxyDatabase
+database command
 end box
 
 box "Plato Services" #f2d9a7
@@ -20,24 +21,23 @@ Autocontrol <- AutocontrolProxy: getApbNumber(dossierNumber)
 AutocontrolProxy -> SharedGridFsDB: saveDocument(file)
 AutocontrolProxy -> AutocontrolProxyDatabase: saveCommand(RECEIVED)
 
-
+AutocontrolProxy -> AutocontrolProxyDatabase: update command PROCESSING
 AutocontrolProxy -> PlatoBackoffice: addAnnexeToApbNbr(Command) <<convertSendAndReceive()>>
+
+
 activate AutocontrolProxy
     activate PlatoBackoffice #FFBBBB
-    PlatoBackoffice -> AutocontrolProxy: update command PROCESSING ???
 
-deactivate AutocontrolProxy
-
-
-    PlatoBackoffice -> PlatoBackoffice: createAnnexeDocument(idGridFS)
-    PlatoBackoffice -> PlatoBackoffice: updatePharmacyWithApbNbr(idAnnexeDocument, apbNbr)
-    PlatoOutBox <-- "PlatoBackoffice DataBase" : notify event update pharmacy (if ACCEPTED) (db push)
+    PlatoBackoffice -> "PlatoBackoffice DataBase": createAnnexeDocument(idGridFS)
+    PlatoBackoffice -> "PlatoBackoffice DataBase": updatePharmacyWithApbNbr(idAnnexeDocument, apbNbr)
     return ACCEPTED or REJECTED
     deactivate PlatoBackoffice
+deactivate AutocontrolProxy
+    PlatoOutBox <-- "PlatoBackoffice DataBase" : notify event update pharmacy (if ACCEPTED) (db push)
 
 PlatoOutBox -> AutocontrolProxy: outbox event update
 
-AutocontrolProxy -> AutocontrolProxy : updateCommandProcessed update pharmacy with annexe
+AutocontrolProxy -> command : updateCommandProcessed
 
 
 

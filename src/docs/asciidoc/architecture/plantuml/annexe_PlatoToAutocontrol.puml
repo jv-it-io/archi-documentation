@@ -22,10 +22,11 @@ Inspector -> PlatoBackoffice: Inspector add annexe(s) to one or more pharmacies
 
 PlatoBackoffice -> SharedGridFsDB: Save file(s)
 activate PlatoBackoffice #FFBBBB
-PlatoBackoffice -> PlatoBackoffice: save document(s)
-PlatoBackoffice -> PlatoBackoffice: add document(s) to pharmacy(ies)
-PlatoOutBox <-- "PlatoBackoffice DataBase" : notify event add document to pharmacy (db push)
+PlatoBackoffice -> "PlatoBackoffice DataBase": save document(s)
+PlatoBackoffice -> "PlatoBackoffice DataBase": add document(s) to pharmacy(ies)
 deactivate PlatoBackoffice #FFBBBB
+PlatoOutBox <-- "PlatoBackoffice DataBase" : notify event add document to pharmacy (db push)
+
 PlatoOutBox -> AutocontrolProxy: outbox event add document to pharmacy
 
 AutocontrolProxy -> SharedGridFsDB: get document (file)

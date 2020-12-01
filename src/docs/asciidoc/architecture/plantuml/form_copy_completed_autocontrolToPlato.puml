@@ -16,24 +16,22 @@ Autocontrol <- AutocontrolProxy: getEvent(lastToken)
 Autocontrol -> AutocontrolProxy: event notification FORM_COPY_COMPLETED
 AutocontrolProxy -> AutocontrolProxyDatabase: saveCommand(RECEIVED)
 
-
+AutocontrolProxy -> AutocontrolProxyDatabase: update command PROCESSING
 AutocontrolProxy -> PlatoBackoffice: newFormCompleted(Command) <<convertSendAndReceive()>>
 activate AutocontrolProxy
     activate PlatoBackoffice #FFBBBB
-    PlatoBackoffice -> AutocontrolProxy: update command PROCESSING ???
 
-deactivate AutocontrolProxy
-
-    PlatoBackoffice -> PlatoBackoffice: update current active form
-    PlatoOutBox <-- "PlatoBackoffice DataBase" : notify event form updated (if ACCEPTED) (db push)
+    PlatoBackoffice -> "PlatoBackoffice DataBase": update current active form
     return ACCEPTED or REJECTED
     deactivate PlatoBackoffice
+deactivate AutocontrolProxy
+    PlatoOutBox <-- "PlatoBackoffice DataBase" : notify event form updated (if ACCEPTED) (db push)
 
 PlatoOutBox -> AutocontrolProxy: outbox event update
 
 AutocontrolProxy -> Autocontrol: update form with new dates
 
-AutocontrolProxy -> AutocontrolProxy : updateCommandProcessed update pharmacy with annexe
+AutocontrolProxy -> AutocontrolProxyDatabase : updateCommandProcessed update pharmacy with annexe
 
 
 @enduml
